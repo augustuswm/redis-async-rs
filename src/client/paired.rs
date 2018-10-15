@@ -239,6 +239,8 @@ impl PairedConnection {
             }
         }
 
+        println!("{:?}", msg);
+
         let (tx, rx) = oneshot::channel();
         let send_f = self
             .out_tx_c
@@ -246,9 +248,12 @@ impl PairedConnection {
             .map_err(|_| error::Error::EndOfStream);
 
         Either::A(send_f.and_then(|_| {
-            rx.then(|v| match v {
-                Ok(v) => future::result(T::from_resp(v)),
-                Err(e) => future::err(e.into()),
+            rx.then(|v| {
+                println!("{:?}", v);
+                match v {
+                    Ok(v) => future::result(T::from_resp(v)),
+                    Err(e) => future::err(e.into()),
+                }
             })
         }))
     }

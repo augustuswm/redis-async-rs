@@ -194,30 +194,23 @@ impl<K: FromResp + Hash + Eq, T: FromResp> FromResp for HashMap<K, T> {
         match resp {
             RespValue::Array(ary) => {
                 let mut map = HashMap::new();
-                let mut items = ary.into_iter().peekable();
+                let mut items = ary.into_iter();
 
-                loop {
-                    if items.peek().is_none() {
-                        break;
-                    }
-
-                    let key = K::from_resp(
-                        items
-                            .next()
-                            .ok_or(error::resp("Cannot be converted into a hashmap", "".into()))?,
-                    )?;
+                while let Some(k) = items.next() {
+                    let key = K::from_resp(k)?;
                     let value = T::from_resp(
                         items
                             .next()
-                            .ok_or(error::resp("Cannot be converted into a hashmap", "".into()))?,
+                            .ok_or(error::resp("Cannot convert odd number of elements into a hashmap", "".into()))?,
                     )?;
 
                     map.insert(key, value);
                 }
 
+
                 Ok(map)
             }
-            _ => Err(error::resp("Cannot be converted into a vector", resp)),
+            _ => Err(error::resp("Cannot be converted into a hashmap", resp)),
         }
     }
 }
